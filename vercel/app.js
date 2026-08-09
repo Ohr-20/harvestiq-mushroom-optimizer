@@ -3,6 +3,22 @@ const empty = document.querySelector('#empty-state');
 const loading = document.querySelector('#loading-state');
 const result = document.querySelector('#result');
 const error = document.querySelector('#error-state');
+const themeToggle = document.querySelector('#theme-toggle');
+
+function syncTheme() {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  themeToggle.textContent = dark ? '☀' : '☾';
+  themeToggle.setAttribute('aria-label', dark ? 'Use light mode' : 'Use dark mode');
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#0d1711' : '#f5f2e9';
+}
+
+themeToggle.addEventListener('click', () => {
+  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('harvestiq-theme', next);
+  syncTheme();
+});
+syncTheme();
 
 const demo = {
   species: 'lion\'s_mane', room_id: 'GR-04', substrate_type: 'supplemented_sawdust', flush_number: '2',
