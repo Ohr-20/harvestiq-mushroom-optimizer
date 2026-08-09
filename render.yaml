@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: harvestiq-mushroom-optimizer
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+
