@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from .config import MODEL_PATH, PROJECT_ROOT
 from .predict import predict
 
-WEB_ROOT = PROJECT_ROOT / "web"
+WEB_ROOT = PROJECT_ROOT / "vercel"
 
 
 class AppHandler(BaseHTTPRequestHandler):
@@ -76,4 +76,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

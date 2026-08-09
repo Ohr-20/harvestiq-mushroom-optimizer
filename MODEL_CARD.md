@@ -1,43 +1,9 @@
-# Model card — HarvestIQ v1.0
+# Model card — HarvestIQ v2
 
-## Intended use
+HarvestIQ v2 ranks production conditions for ten crops across indoor and outdoor systems. A random-forest regressor estimates crop-specific forecast yield and a class-weighted random-forest classifier estimates operational stress risk. The dependency-free Vercel artifact uses Ridge and logistic regression with the same feature schema.
 
-Daily planning support for specialty mushroom farms growing oyster, lion's mane, and shiitake in controlled rooms. The output supports labor/packing preparation and prioritizes batches for contamination inspection.
+Rows are ordered by timestamp: the oldest 80% trains the models and the newest 20% is held out. Exact metrics are in `reports/metrics.json` and `vercel/model_assets/model.json`. Yield is evaluated with MAE, RMSE, R², and a median baseline. Risk is evaluated with ROC AUC, precision, recall, F1, and accuracy.
 
-## Models
+The model is synthetic and not agronomically validated. Yield magnitude depends on the simulated area and horizon. The crop-relative stress index makes the same sensor reading mean different things for avocado, lettuce, tomato, or mushrooms, but it remains a simplified engineering feature—not a causal crop model.
 
-- **Yield:** random forest regressor predicting next-day kilograms.
-- **Contamination:** class-weighted random forest classifier producing probability; the operational alert threshold is 0.40 to favor earlier inspection.
-- Numeric features are standardized and categorical features one-hot encoded inside each fitted pipeline. Unknown categories are safely ignored at inference.
-
-## Evaluation design
-
-Rows are sorted by time; the oldest 80% trains the model and the newest 20% is held out. This better resembles deployment than a random split. `reports/metrics.json` contains the exact reproducible results and date boundary after a pipeline run.
-
-The yield model is compared with a training-median baseline. Contamination is evaluated with ROC AUC plus precision, recall, F1, accuracy, prevalence, and a declared decision threshold. Recall matters operationally because missed contamination is costly; precision matters because false alarms consume inspection time.
-
-## Limitations
-
-- Demo data is synthetic and cannot establish field performance.
-- Predictions do not identify a pathogen or replace microscopy/laboratory testing.
-- The training domain covers only the listed species, substrates, and four example rooms.
-- Extreme sensor values are rejected, but plausible sensor failures can still produce misleading predictions.
-- Feature importance is descriptive, not causal; changing a control does not guarantee the modeled response.
-
-## Production acceptance gates
-
-Before using recommendations on real crops:
-
-1. Train and test on farm-owned data across at least one seasonal cycle.
-2. Compare against the farm's current planning error and inspection protocol.
-3. Run a four-week shadow pilot with no automated control changes.
-4. Choose the risk threshold from the local cost of false negatives versus inspections.
-5. Get operator sign-off on every recommendation rule.
-
-## Monitoring
-
-- Weekly: missing values, out-of-range readings, unknown categories, alert volume.
-- Monthly: yield MAE by species/room/flush and contamination precision/recall after labels mature.
-- Retrain trigger: 20% MAE degradation for two periods, material recall loss, sensor replacement, or new production recipe.
-- Rollback: keep the previous approved artifact and version; the dashboard exposes the current version.
-
+Before operational use, train and test on farm-owned outcomes, report error by crop/system/season, run a shadow pilot, select alert thresholds from local costs, obtain agronomist and operator sign-off, and retain a rollback artifact. Never connect recommendations directly to environmental controls without human review.

@@ -1,57 +1,7 @@
-const form = document.querySelector('#prediction-form');
-const empty = document.querySelector('#empty-state');
-const loading = document.querySelector('#loading-state');
-const result = document.querySelector('#result');
-const error = document.querySelector('#error-state');
-const themeToggle = document.querySelector('#theme-toggle');
-
-function syncTheme() {
-  const dark = document.documentElement.dataset.theme === 'dark';
-  themeToggle.textContent = dark ? '☀' : '☾';
-  themeToggle.setAttribute('aria-label', dark ? 'Use light mode' : 'Use dark mode');
-  document.querySelector('meta[name="theme-color"]').content = dark ? '#0d1711' : '#f5f2e9';
-}
-
-themeToggle.addEventListener('click', () => {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = next;
-  localStorage.setItem('harvestiq-theme', next);
-  syncTheme();
-});
-syncTheme();
-
-const demo = {
-  species: 'lion\'s_mane', room_id: 'GR-04', substrate_type: 'supplemented_sawdust', flush_number: '2',
-  room_age_days: 17, temperature_c: 23.8, humidity_pct: 95.1, co2_ppm: 1540,
-  substrate_moisture_pct: 72, fresh_air_exchanges_hour: 2.1, light_hours: 9,
-  previous_yield_kg: 8.4, pin_count_index: 66
-};
-
-document.querySelector('#demo-button').addEventListener('click', () => {
-  for (const [name, value] of Object.entries(demo)) form.elements[name].value = value;
-});
-
-form.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  empty.classList.add('hidden'); result.classList.add('hidden'); error.classList.add('hidden'); loading.classList.remove('hidden');
-  const button = form.querySelector('button[type="submit"]'); button.disabled = true;
-  const data = Object.fromEntries(new FormData(form).entries());
-  const numeric = ['room_age_days','temperature_c','humidity_pct','co2_ppm','substrate_moisture_pct','fresh_air_exchanges_hour','light_hours','previous_yield_kg','pin_count_index'];
-  numeric.forEach(key => data[key] = Number(data[key]));
-  try {
-    const response = await fetch('/api/predict', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error || 'Prediction service unavailable');
-    document.querySelector('#yield-value').textContent = body.predicted_yield_kg.toFixed(1);
-    document.querySelector('#risk-value').textContent = `${Math.round(body.contamination_probability * 100)}%`;
-    document.querySelector('#labor-value').textContent = body.recommended_harvest_labor_hours;
-    document.querySelector('#crates-value').textContent = body.recommended_crates;
-    const badge = document.querySelector('#risk-badge'); badge.textContent = `${body.risk_band} risk`; badge.className = `badge ${body.risk_band}`;
-    const list = document.querySelector('#recommendations'); list.innerHTML = '';
-    body.recommendations.forEach(item => { const li = document.createElement('li'); li.textContent = item; list.appendChild(li); });
-    result.classList.remove('hidden');
-  } catch (err) {
-    document.querySelector('#error-message').textContent = err.message; error.classList.remove('hidden');
-  } finally { loading.classList.add('hidden'); button.disabled = false; }
-});
-
+const form=document.querySelector('#prediction-form'),empty=document.querySelector('#empty-state'),loading=document.querySelector('#loading-state'),result=document.querySelector('#result'),error=document.querySelector('#error-state'),themeToggle=document.querySelector('#theme-toggle');
+const profiles={oyster_mushroom:{system:'grow_room',temp:18,humidity:90,moisture:62,light:9,age:12,area:95,previous:15,development:78,co2:860,vent:5.5,stage:'harvest_ready',zone:'GR-01'},lions_mane:{system:'grow_room',temp:17,humidity:88,moisture:63,light:9,age:15,area:80,previous:10,development:74,co2:820,vent:5,stage:'harvest_ready',zone:'GR-02'},shiitake:{system:'grow_room',temp:16,humidity:86,moisture:61,light:8,age:20,area:90,previous:12,development:76,co2:900,vent:5,stage:'harvest_ready',zone:'GR-03'},avocado:{system:'orchard',temp:22,humidity:61,moisture:56,light:11,age:180,area:240,previous:82,development:84,co2:420,vent:8,stage:'fruiting',zone:'OR-01'},tomato:{system:'greenhouse',temp:23,humidity:67,moisture:64,light:13,age:75,area:140,previous:88,development:80,co2:720,vent:6,stage:'fruiting',zone:'GH-01'},strawberry:{system:'greenhouse',temp:20,humidity:70,moisture:62,light:12,age:62,area:120,previous:35,development:76,co2:700,vent:6,stage:'fruiting',zone:'GH-02'},cucumber:{system:'greenhouse',temp:24,humidity:72,moisture:67,light:13,age:58,area:130,previous:94,development:82,co2:740,vent:6,stage:'fruiting',zone:'GH-03'},lettuce:{system:'hydroponic',temp:19,humidity:65,moisture:74,light:14,age:34,area:90,previous:42,development:90,co2:680,vent:5,stage:'harvest_ready',zone:'HY-01'},bell_pepper:{system:'greenhouse',temp:24,humidity:67,moisture:63,light:13,age:88,area:125,previous:50,development:78,co2:720,vent:6,stage:'fruiting',zone:'GH-04'},basil:{system:'hydroponic',temp:23,humidity:65,moisture:72,light:14,age:31,area:75,previous:24,development:88,co2:680,vent:5,stage:'harvest_ready',zone:'HY-02'}};
+function syncTheme(){const dark=document.documentElement.dataset.theme==='dark';themeToggle.textContent=dark?'☀':'☾';themeToggle.setAttribute('aria-label',dark?'Use light mode':'Use dark mode');document.querySelector('meta[name="theme-color"]').content=dark?'#0d1711':'#f5f2e9'}
+themeToggle.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;localStorage.setItem('harvestiq-theme',next);syncTheme()});syncTheme();
+function loadProfile(crop){const p=profiles[crop];form.elements.growing_system.value=p.system;form.elements.temperature_c.value=p.temp;form.elements.humidity_pct.value=p.humidity;form.elements.moisture_pct.value=p.moisture;form.elements.light_hours.value=p.light;form.elements.cycle_age_days.value=p.age;form.elements.production_area_m2.value=p.area;form.elements.previous_yield_kg.value=p.previous;form.elements.development_index.value=p.development;form.elements.co2_ppm.value=p.co2;form.elements.ventilation_index.value=p.vent;form.elements.growth_stage.value=p.stage;form.elements.zone_id.value=p.zone}
+document.querySelector('#crop').addEventListener('change',e=>loadProfile(e.target.value));document.querySelector('#demo-button').addEventListener('click',()=>{form.elements.crop.value='avocado';loadProfile('avocado')});
+form.addEventListener('submit',async event=>{event.preventDefault();empty.classList.add('hidden');result.classList.add('hidden');error.classList.add('hidden');loading.classList.remove('hidden');const button=form.querySelector('button[type="submit"]');button.disabled=true;const data=Object.fromEntries(new FormData(form).entries());['cycle_age_days','temperature_c','humidity_pct','co2_ppm','moisture_pct','ventilation_index','light_hours','previous_yield_kg','development_index','production_area_m2'].forEach(k=>data[k]=Number(data[k]));try{const response=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const body=await response.json();if(!response.ok)throw new Error(body.error||'Prediction service unavailable');document.querySelector('#crop-result-label').textContent=`${body.crop_label} forecast`;document.querySelector('#yield-value').textContent=body.predicted_yield_kg.toFixed(1);document.querySelector('#horizon-value').textContent=body.forecast_horizon;document.querySelector('#risk-value').textContent=`${Math.round(body.operational_risk_probability*100)}%`;document.querySelector('#labor-value').textContent=body.recommended_harvest_labor_hours;document.querySelector('#crates-value').textContent=body.recommended_crates;const badge=document.querySelector('#risk-badge');badge.textContent=`${body.risk_band} risk`;badge.className=`badge ${body.risk_band}`;const list=document.querySelector('#recommendations');list.innerHTML='';body.recommendations.forEach(item=>{const li=document.createElement('li');li.textContent=item;list.appendChild(li)});result.classList.remove('hidden')}catch(err){document.querySelector('#error-message').textContent=err.message;error.classList.remove('hidden')}finally{loading.classList.add('hidden');button.disabled=false}});

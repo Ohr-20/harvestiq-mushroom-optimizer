@@ -7,13 +7,12 @@ def main() -> None:
     RAW_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     frame = generate_demo_data()
     frame.to_csv(RAW_DATA_PATH, index=False)
-    print(f"1/2 Collected {len(frame):,} grow-room observations")
+    print(f"1/2 Collected {len(frame):,} multi-crop observations")
     metrics = run_training(RAW_DATA_PATH)
     print("2/2 Trained and evaluated both models")
     print(f"Yield MAE: {metrics['yield_model']['mae_kg']:.2f} kg")
-    print(f"Contamination ROC AUC: {metrics['contamination_model']['roc_auc']:.3f}")
+    print(f"Operational-risk ROC AUC: {metrics['contamination_model']['roc_auc']:.3f}")
 
 
 if __name__ == "__main__":
     main()
-

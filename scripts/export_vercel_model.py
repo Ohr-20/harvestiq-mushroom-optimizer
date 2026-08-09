@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 from pathlib import Path
 
 import numpy as np
@@ -61,7 +60,7 @@ def export() -> dict:
     category_transformer = prepare.named_transformers_["categorical"]
 
     artifact = {
-        "version": "1.1.0-vercel",
+        "version": "2.0.0-vercel",
         "numeric_features": NUMERIC_FEATURES,
         "categorical_features": CATEGORICAL_FEATURES,
         "numeric_mean": numeric_transformer.mean_.tolist(),
@@ -87,8 +86,6 @@ def export() -> dict:
 
     MODEL_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     MODEL_OUTPUT.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
-    for filename in ["index.html", "styles.css", "app.js"]:
-        shutil.copy2(PROJECT_ROOT / "web" / filename, VERCEL_ROOT / filename)
     return artifact["metrics"]
 
 

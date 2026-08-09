@@ -1,65 +1,27 @@
-import importlib.util
-import unittest
+import importlib.util, unittest
 from pathlib import Path
+MODULE_PATH=Path(__file__).resolve().parents[1]/"vercel"/"api"/"predict.py"
+SPEC=importlib.util.spec_from_file_location("vercel_predict",MODULE_PATH);VERCEL_API=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(VERCEL_API)
 
-
-MODULE_PATH = Path(__file__).resolve().parents[1] / "vercel" / "api" / "predict.py"
-SPEC = importlib.util.spec_from_file_location("vercel_predict", MODULE_PATH)
-VERCEL_API = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(VERCEL_API)
-
+def payload(crop="avocado",**changes):
+    data={"crop":crop,"growing_system":"orchard","growth_stage":"fruiting","zone_id":"OR-01","cycle_age_days":180,"temperature_c":22,"humidity_pct":61,"co2_ppm":420,"moisture_pct":56,"ventilation_index":8,"light_hours":11,"previous_yield_kg":82,"development_index":84,"production_area_m2":240};data.update(changes);return data
 
 class VercelPredictionTests(unittest.TestCase):
     def test_static_dashboard_assets_are_packaged(self):
-        for filename in ["index.html", "styles.css", "app.js"]:
-            self.assertTrue((VERCEL_API.STATIC_ROOT / filename).is_file())
+        for filename in ["index.html","styles.css","app.js"]:self.assertTrue((VERCEL_API.STATIC_ROOT/filename).is_file())
+    def test_all_ten_crop_profiles_are_deployable(self):
+        self.assertEqual(len(VERCEL_API.CROPS),10)
+        for crop,profile in VERCEL_API.CROPS.items():
+            changes={"growing_system":profile["system"]}
+            result=VERCEL_API.predict(payload(crop,**changes))
+            self.assertGreaterEqual(result["predicted_yield_kg"],0)
+            self.assertIn(result["risk_band"],{"low","medium","high"})
+    def test_avocado_contract_and_specialist_action(self):
+        result=VERCEL_API.predict(payload())
+        self.assertEqual(result["crop_label"],"Avocado");self.assertEqual(result["forecast_horizon"],"next 14 days")
+        self.assertTrue(any("dry matter" in x for x in result["recommendations"]))
+    def test_adverse_conditions_trigger_actions(self):
+        result=VERCEL_API.predict(payload("tomato",growing_system="greenhouse",temperature_c=38,moisture_pct=25,humidity_pct=94))
+        self.assertGreaterEqual(len(result["recommendations"]),2)
 
-    def test_stable_conditions_return_complete_contract(self):
-        result = VERCEL_API.predict(
-            {
-                "species": "oyster",
-                "substrate_type": "straw",
-                "flush_number": "1",
-                "room_id": "GR-01",
-                "room_age_days": 12,
-                "temperature_c": 18.2,
-                "humidity_pct": 89,
-                "co2_ppm": 860,
-                "substrate_moisture_pct": 62,
-                "fresh_air_exchanges_hour": 5.5,
-                "light_hours": 10,
-                "previous_yield_kg": 15.2,
-                "pin_count_index": 108,
-            }
-        )
-        self.assertGreater(result["predicted_yield_kg"], 0)
-        self.assertIn(result["risk_band"], {"low", "medium", "high"})
-        self.assertGreaterEqual(result["recommended_crates"], 1)
-        self.assertTrue(result["recommendations"])
-
-    def test_adverse_conditions_trigger_operational_actions(self):
-        result = VERCEL_API.predict(
-            {
-                "species": "lion's_mane",
-                "substrate_type": "supplemented_sawdust",
-                "flush_number": "2",
-                "room_id": "GR-04",
-                "room_age_days": 17,
-                "temperature_c": 23.8,
-                "humidity_pct": 95.1,
-                "co2_ppm": 1540,
-                "substrate_moisture_pct": 72,
-                "fresh_air_exchanges_hour": 2.1,
-                "light_hours": 9,
-                "previous_yield_kg": 8.4,
-                "pin_count_index": 66,
-            }
-        )
-        self.assertIn(result["risk_band"], {"medium", "high"})
-        self.assertTrue(any("Isolate" in item for item in result["recommendations"]))
-        self.assertTrue(any("fresh-air" in item for item in result["recommendations"]))
-
-
-if __name__ == "__main__":
-    unittest.main()
-
+if __name__=="__main__":unittest.main()

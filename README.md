@@ -1,37 +1,25 @@
-# HarvestIQ — Specialty Mushroom Farm Intelligence
+# HarvestIQ — Multi-Crop Intelligence
 
-HarvestIQ is an end-to-end data science product for small specialty mushroom farms. It forecasts **next-day harvest weight** and estimates **contamination risk**, then translates both predictions into staffing, crate, airflow, hydration, and inspection recommendations.
+HarvestIQ is an end-to-end data science product for crop-zone planning. It supports ten crop profiles across grow rooms, greenhouses, hydroponics, and orchards:
 
-This is a deliberately narrow business product rather than a generic ML demo. A farm can use the forecast during its afternoon production meeting to prepare tomorrow's labor and packing capacity while catching risky grow-room conditions early.
+- Oyster mushroom, lion's mane, and shiitake
+- Avocado
+- Tomato, strawberry, cucumber, and bell pepper
+- Lettuce and basil
 
-## Business case
+The application estimates crop-specific yield over an appropriate planning horizon, predicts operational stress risk, and translates both signals into scouting, climate, irrigation, labor, and packing actions.
 
-Specialty mushroom farms operate perishable, short harvest windows. Underestimating a flush creates rushed labor and inadequate cold-storage/packing capacity; overestimating it wastes labor. Contamination can spread quickly and destroy a batch. HarvestIQ targets both decisions from one sensor-and-operations record.
-
-Illustrative value model for a four-room farm:
-
-- Preventing one 30 kg batch loss per month at $12/kg protects about **$4,320/year**.
-- Avoiding 6 unnecessary labor hours per week at $20/hour saves about **$6,240/year**.
-- The product should therefore be piloted if setup and annual operation cost materially less than roughly **$10,500/year**. These are scenario assumptions, not claimed outcomes.
-
-## What is included
+## End-to-end workflow
 
 ```text
-data collection -> validation -> time-based split -> model training -> evaluation
-       -> versioned artifact -> prediction API -> farm operations dashboard
+multi-crop telemetry simulation → validation → chronological holdout
+→ yield regression + risk classification → compact model export
+→ crop-aware API → responsive Vercel dashboard
 ```
 
-- Reproducible grow-room telemetry and operations-data simulator
-- Adapter and schema validation for real controller CSV exports
-- Yield regression and contamination classification pipelines
-- Time-ordered holdout evaluation to avoid future-to-past leakage
-- Versioned model artifact, metrics, holdout predictions, and feature importance
-- Browser dashboard plus JSON API using Python's standard library
-- Tests, Docker packaging, health check, and cloud deployment blueprint
+The deterministic simulator produces 9,000 crop-zone observations. Universal features include production area, growing system, crop stage, cycle age, temperature, humidity, CO₂, root-zone/substrate moisture, ventilation, light, previous yield, development, and a derived crop-relative stress index.
 
-## Quick start
-
-Run from this directory with Python 3.11+:
+## Run locally
 
 ```powershell
 python -m venv .venv
@@ -39,72 +27,41 @@ python -m venv .venv
 pip install -r requirements.txt
 $env:PYTHONPATH="src"
 python scripts\run_pipeline.py
+python scripts\export_vercel_model.py
 python -m mushroom_optimizer.server --port 8000
 ```
 
-Open `http://localhost:8000`. The pipeline creates 4,200 demo observations, trains both models, evaluates on the newest 20%, and writes all artifacts locally.
+Open `http://localhost:8000`.
 
-To bring real farm data, export the schema documented in [DATA_CARD.md](DATA_CARD.md), then run:
+## API example
 
-```powershell
-python -m mushroom_optimizer.data_collection --source path\to\controller_export.csv
-python -m mushroom_optimizer.train
-```
-
-## API
-
-`GET /api/health` reports service and model readiness. `POST /api/predict` accepts one reading:
+`POST /api/predict` with an avocado orchard reading:
 
 ```json
 {
-  "species": "oyster",
-  "room_id": "GR-01",
-  "substrate_type": "straw",
-  "flush_number": "1",
-  "room_age_days": 12,
-  "temperature_c": 18.2,
-  "humidity_pct": 89,
-  "co2_ppm": 860,
-  "substrate_moisture_pct": 62,
-  "fresh_air_exchanges_hour": 5.5,
-  "light_hours": 10,
-  "previous_yield_kg": 15.2,
-  "pin_count_index": 108
+  "crop": "avocado",
+  "growing_system": "orchard",
+  "growth_stage": "fruiting",
+  "zone_id": "OR-01",
+  "cycle_age_days": 180,
+  "production_area_m2": 240,
+  "temperature_c": 22,
+  "humidity_pct": 61,
+  "co2_ppm": 420,
+  "moisture_pct": 56,
+  "ventilation_index": 8,
+  "light_hours": 11,
+  "previous_yield_kg": 82,
+  "development_index": 84
 }
 ```
 
-The response includes predicted kilograms, contamination probability and risk band, labor hours, crate count, and contextual actions.
-
-## Testing
-
-The test suite uses only the standard library and installed ML dependencies:
-
-```powershell
-$env:PYTHONPATH="src"
-python -m unittest discover -s tests -v
-```
+The response includes the crop name, forecast horizon, kilograms, operational-risk probability, labor, packing units, and crop-aware recommendations.
 
 ## Deployment
 
-### Docker
-
-```powershell
-docker build -t harvestiq .
-docker run --rm -p 8000:8000 harvestiq
-```
-
-### Vercel
-
-The `vercel/` directory is a deployment package with a static dashboard and a
-dependency-free Python Function. Run `python scripts/export_vercel_model.py`,
-push the result, then import the GitHub repository in Vercel and set the Root
-Directory to `vercel`. The compact deployment model is evaluated separately
-and its metrics are stored in `vercel/model_assets/model.json`.
-
-### Render
-
-Push the directory to GitHub and create a Render Blueprint from `render.yaml`. The build trains a deterministic bundled demo model; for a production pilot, persist approved model artifacts in object storage and promote them after evaluation instead of retraining during deployment.
+The `vercel/` directory is the production package. It contains a dependency-free Python inference function, compact linear model artifact, responsive interface, and persistent dark mode. Import the repository into Vercel with Root Directory set to `vercel`.
 
 ## Responsible use
 
-HarvestIQ is decision support, not an autonomous environmental controller. Operators should verify unusual sensor values, follow farm sanitation protocols, and treat contamination warnings as inspection priorities—not laboratory diagnoses. See [MODEL_CARD.md](MODEL_CARD.md) for limitations and monitoring guidance.
+The bundled data is synthetic. This project demonstrates architecture and product logic, not validated agronomy. Crop profiles are broad defaults and cannot represent cultivar, rootstock, region, planting density, tree age, disease pressure, or farm practices. Recalibrate with governed farm data and agronomist review before operational use.

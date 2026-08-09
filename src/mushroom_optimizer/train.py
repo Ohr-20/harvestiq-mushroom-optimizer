@@ -124,7 +124,7 @@ def train_models(
         "features": FEATURES,
         "risk_threshold": 0.40,
         "metadata": metrics,
-        "version": "1.0.0",
+        "version": "2.0.0",
     }
     importances = pd.concat(
         [_feature_importance(yield_model, "yield"), _feature_importance(risk_model, "contamination")],
