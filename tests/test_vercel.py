@@ -10,6 +10,10 @@ SPEC.loader.exec_module(VERCEL_API)
 
 
 class VercelPredictionTests(unittest.TestCase):
+    def test_static_dashboard_assets_are_packaged(self):
+        for filename in ["index.html", "styles.css", "app.js"]:
+            self.assertTrue((VERCEL_API.STATIC_ROOT / filename).is_file())
+
     def test_stable_conditions_return_complete_contract(self):
         result = VERCEL_API.predict(
             {
