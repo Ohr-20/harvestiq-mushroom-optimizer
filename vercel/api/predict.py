@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import json
 import math
+import mimetypes
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 MODEL_PATH = Path(__file__).resolve().parents[1] / "model_assets" / "model.json"
 MODEL = json.loads(MODEL_PATH.read_text(encoding="utf-8"))
+STATIC_ROOT = Path(__file__).resolve().parents[1]
 
 RANGES = {
     "room_age_days": (1, 60),
@@ -100,6 +103,19 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(encoded)
+
+    def do_GET(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path
+        filename = {"/": "index.html", "/styles.css": "styles.css", "/app.js": "app.js"}.get(path)
+        if filename is None:
+            self._json(404, {"error": "Not found"})
+            return
+        body = (STATIC_ROOT / filename).read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", mimetypes.guess_type(filename)[0] or "application/octet-stream")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_POST(self) -> None:  # noqa: N802
         try:
