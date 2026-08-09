@@ -93,6 +93,14 @@ docker build -t harvestiq .
 docker run --rm -p 8000:8000 harvestiq
 ```
 
+### Vercel
+
+The `vercel/` directory is a deployment package with a static dashboard and a
+dependency-free Python Function. Run `python scripts/export_vercel_model.py`,
+push the result, then import the GitHub repository in Vercel and set the Root
+Directory to `vercel`. The compact deployment model is evaluated separately
+and its metrics are stored in `vercel/model_assets/model.json`.
+
 ### Render
 
 Push the directory to GitHub and create a Render Blueprint from `render.yaml`. The build trains a deterministic bundled demo model; for a production pilot, persist approved model artifacts in object storage and promote them after evaluation instead of retraining during deployment.
@@ -100,4 +108,3 @@ Push the directory to GitHub and create a Render Blueprint from `render.yaml`. T
 ## Responsible use
 
 HarvestIQ is decision support, not an autonomous environmental controller. Operators should verify unusual sensor values, follow farm sanitation protocols, and treat contamination warnings as inspection priorities—not laboratory diagnoses. See [MODEL_CARD.md](MODEL_CARD.md) for limitations and monitoring guidance.
-
