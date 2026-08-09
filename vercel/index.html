@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="HarvestIQ yield and contamination decision support for specialty mushroom farms.">
+  <title>HarvestIQ · Mushroom Farm Intelligence</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="HarvestIQ home">
+      <span class="brand-mark">H</span><span>HarvestIQ</span>
+    </a>
+    <div class="status"><span class="status-dot"></span> Model online · v1.0</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Grow-room decision support</div>
+      <h1>Know tomorrow’s harvest.<br><em>Protect today’s crop.</em></h1>
+      <p>Turn environmental readings into a next-day yield forecast, contamination warning, and an actionable harvest plan.</p>
+      <div class="hero-stats">
+        <div><strong>2</strong><span>operational models</span></div>
+        <div><strong>&lt; 1 min</strong><span>from reading to plan</span></div>
+        <div><strong>24 hr</strong><span>planning horizon</span></div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <form id="prediction-form" class="panel form-panel">
+        <div class="panel-heading">
+          <div><span class="step">01</span><h2>Grow-room reading</h2></div>
+          <button type="button" class="text-button" id="demo-button">Load example</button>
+        </div>
+
+        <div class="section-label">Batch</div>
+        <div class="form-grid">
+          <label>Species<select name="species"><option value="oyster">Oyster</option><option value="lion's_mane">Lion's mane</option><option value="shiitake">Shiitake</option></select></label>
+          <label>Grow room<select name="room_id"><option>GR-01</option><option>GR-02</option><option>GR-03</option><option>GR-04</option></select></label>
+          <label>Substrate<select name="substrate_type"><option value="straw">Straw</option><option value="supplemented_sawdust">Supplemented sawdust</option><option value="hardwood_sawdust">Hardwood sawdust</option></select></label>
+          <label>Flush<select name="flush_number"><option value="1">First</option><option value="2">Second</option><option value="3">Third</option></select></label>
+          <label>Room age <span>days</span><input name="room_age_days" type="number" value="12" min="1" max="60" step="0.1" required></label>
+          <label>Previous yield <span>kg</span><input name="previous_yield_kg" type="number" value="15.2" min="0" max="60" step="0.1" required></label>
+        </div>
+
+        <div class="section-label">Environment</div>
+        <div class="form-grid">
+          <label>Temperature <span>°C</span><input name="temperature_c" type="number" value="18.2" min="5" max="35" step="0.1" required></label>
+          <label>Humidity <span>%</span><input name="humidity_pct" type="number" value="89" min="30" max="100" step="0.1" required></label>
+          <label>CO₂ <span>ppm</span><input name="co2_ppm" type="number" value="860" min="300" max="5000" step="1" required></label>
+          <label>Substrate moisture <span>%</span><input name="substrate_moisture_pct" type="number" value="62" min="20" max="95" step="0.1" required></label>
+          <label>Fresh-air exchange <span>/hr</span><input name="fresh_air_exchanges_hour" type="number" value="5.5" min="0" max="20" step="0.1" required></label>
+          <label>Light exposure <span>hours</span><input name="light_hours" type="number" value="10" min="0" max="24" step="0.1" required></label>
+          <label class="wide">Pin count index <span>visual estimate</span><input name="pin_count_index" type="number" value="108" min="0" max="300" step="1" required></label>
+        </div>
+        <button class="primary-button" type="submit"><span>Generate harvest plan</span><span aria-hidden="true">→</span></button>
+      </form>
+
+      <aside class="panel results-panel" aria-live="polite">
+        <div class="panel-heading"><div><span class="step">02</span><h2>Tomorrow’s plan</h2></div></div>
+        <div id="empty-state" class="empty-state">
+          <div class="rings"><span></span><span></span><i>↗</i></div>
+          <h3>Ready when you are</h3>
+          <p>Enter the latest grow-room readings to generate an operational forecast.</p>
+        </div>
+        <div id="loading-state" class="loading-state hidden"><div class="spinner"></div><p>Reading the grow room…</p></div>
+        <div id="result" class="hidden">
+          <div class="yield-card">
+            <span>Expected yield</span>
+            <div><strong id="yield-value">—</strong><small>kg</small></div>
+            <p>next 24 hours</p>
+          </div>
+          <div class="risk-row">
+            <div><span>Contamination risk</span><strong id="risk-value">—</strong></div>
+            <span id="risk-badge" class="badge">—</span>
+          </div>
+          <div class="allocation-grid">
+            <div><span>Labor</span><strong id="labor-value">—</strong><small>hours</small></div>
+            <div><span>Packing</span><strong id="crates-value">—</strong><small>crates</small></div>
+          </div>
+          <div class="actions"><span class="section-label">Recommended actions</span><ul id="recommendations"></ul></div>
+          <p class="model-note">Decision support only · Verify unusual readings before acting</p>
+        </div>
+        <div id="error-state" class="error-state hidden"><strong>Couldn’t create the plan</strong><p id="error-message"></p></div>
+      </aside>
+    </section>
+
+    <section class="how-it-works">
+      <div><span>01</span><h3>Collect</h3><p>Environmental controller and batch records land in one validated schema.</p></div>
+      <div><span>02</span><h3>Predict</h3><p>Separate models estimate harvest weight and contamination probability.</p></div>
+      <div><span>03</span><h3>Act</h3><p>Predictions become staffing, packing, airflow, and inspection actions.</p></div>
+    </section>
+  </main>
+  <footer><span>HarvestIQ</span><p>Purpose-built intelligence for specialty mushroom farms.</p></footer>
+  <script src="/app.js"></script>
+</body>
+</html>
+

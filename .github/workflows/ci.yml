@@ -14,3 +14,4 @@ jobs:
       - run: pip install -r requirements.txt
       - run: PYTHONPATH=src python -m unittest discover -s tests -v
       - run: PYTHONPATH=src python scripts/run_pipeline.py
+      - run: PYTHONPATH=src python scripts/export_vercel_model.py
